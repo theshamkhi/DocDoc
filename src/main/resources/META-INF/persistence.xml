@@ -5,8 +5,21 @@
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
                                  https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
-    <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="DocDocPU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Entities -->
+        <class>com.docdoc.docdoc.model.User</class>
+        <class>com.docdoc.docdoc.model.Infirmier</class>
+        <class>com.docdoc.docdoc.model.MedecinGeneraliste</class>
+        <class>com.docdoc.docdoc.model.MedecinSpecialiste</class>
+        <class>com.docdoc.docdoc.model.Patient</class>
+        <class>com.docdoc.docdoc.model.SigneVital</class>
+        <class>com.docdoc.docdoc.model.Consultation</class>
+        <class>com.docdoc.docdoc.model.DemandeExpertise</class>
+        <class>com.docdoc.docdoc.model.Creneau</class>
+        <class>com.docdoc.docdoc.model.ActeTechnique</class>
+
 
         <properties>
             <!-- JDBC Configuration -->
@@ -15,11 +28,14 @@
             <property name="jakarta.persistence.jdbc.user" value="postgres"/>
             <property name="jakarta.persistence.jdbc.password" value="123"/>
 
-            <!-- Hibernate (JPA Provider) Configuration -->
-            <property name="jakarta.persistence.schema-generation.database.action" value="create"/>
+            <!-- Hibernate Configuration -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+
+            <!-- Affichage SQL -->
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
         </properties>
     </persistence-unit>
 
