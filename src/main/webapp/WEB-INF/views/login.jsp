@@ -93,7 +93,7 @@
         </div>
 
         <!-- Register Link -->
-        <a href="${pageContext.request.contextPath}/register"
+        <a href="${pageContext.request.contextPath}/admin/register"
            class="block w-full py-3.5 text-center border-2 border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white font-semibold rounded-xl hover:bg-slate-800/50 transition-all duration-200">
             Créer un compte
         </a>
