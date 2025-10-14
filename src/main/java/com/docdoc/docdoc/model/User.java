@@ -1,7 +1,6 @@
 package com.docdoc.docdoc.model;
 import jakarta.persistence.*;
 import com.docdoc.docdoc.model.enums.Role;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
