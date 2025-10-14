@@ -9,6 +9,7 @@
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
         <!-- Entities -->
+        <class>com.docdoc.docdoc.model.Admin</class>
         <class>com.docdoc.docdoc.model.User</class>
         <class>com.docdoc.docdoc.model.Infirmier</class>
         <class>com.docdoc.docdoc.model.MedecinGeneraliste</class>
