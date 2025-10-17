@@ -77,4 +77,19 @@ public class ConsultationRepository extends GenericRepository<Consultation, Long
             em.close();
         }
     }
+
+    public Patient getProchainPatient() {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            String jpql = "SELECT p FROM Patient p WHERE p.enAttente = true " +
+                    "ORDER BY p.dateEnregistrement ASC";
+            List<Patient> patients = em.createQuery(jpql, Patient.class)
+                    .setMaxResults(1)
+                    .getResultList();
+
+            return patients.isEmpty() ? null : patients.get(0);
+        } finally {
+            em.close();
+        }
+    }
 }

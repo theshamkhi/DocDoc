@@ -30,7 +30,7 @@ public class SigneVitalRepository extends GenericRepository<SigneVital, Long> {
         }
     }
 
-    public List<SigneVital> findByPatientId(Long patientId) {
+    public List<SigneVital> findByPatientId(String patientId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             String jpql = "SELECT s FROM SigneVital s WHERE s.patient.id = :patientId " +
