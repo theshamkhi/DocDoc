@@ -17,7 +17,7 @@ public class CSRFFilter implements Filter {
     // URLs exemptées de la vérification CSRF
     private static final List<String> EXEMPT_URLS = Arrays.asList(
             "/login",
-            "/register"
+            "/login.jsp"
     );
 
     @Override

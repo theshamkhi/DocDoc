@@ -12,9 +12,9 @@ import java.util.List;
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
-    // Pages publiques accessibles sans authentification
     private static final List<String> PUBLIC_URLS = Arrays.asList(
             "/login",
+            "/login.jsp",
             "/css/",
             "/js/",
             "/images/"
