@@ -14,11 +14,11 @@ public class Consultation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "medecin_id", nullable = false)
     private MedecinGeneraliste medecin;
 
@@ -47,10 +47,11 @@ public class Consultation {
     @Column(name = "date_cloture")
     private LocalDateTime dateCloture;
 
-    @OneToMany(mappedBy = "consultation", cascade = CascadeType.ALL, orphanRemoval = true)
+    // IMPORTANT: Changed to EAGER loading to prevent lazy initialization errors
+    @OneToMany(mappedBy = "consultation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ActeTechnique> actesTechniques = new ArrayList<>();
 
-    @OneToOne(mappedBy = "consultation", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "consultation", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private DemandeExpertise demandeExpertise;
 
     @PrePersist

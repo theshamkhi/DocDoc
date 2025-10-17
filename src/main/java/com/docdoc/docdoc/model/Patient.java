@@ -3,8 +3,10 @@ package com.docdoc.docdoc.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 @Entity
 @Table(name = "patients")
@@ -67,8 +69,11 @@ public class Patient {
     public String getPrenom() { return prenom; }
     public void setPrenom(String prenom) { this.prenom = prenom; }
 
-    public LocalDate getDateNaissance() { return dateNaissance; }
     public void setDateNaissance(LocalDate dateNaissance) { this.dateNaissance = dateNaissance; }
+
+    public Date getDateNaissance() {
+        return Date.from(this.dateNaissance.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
 
     public String getNumeroSecuriteSociale() { return numeroSecuriteSociale; }
     public void setNumeroSecuriteSociale(String numeroSecuriteSociale) {
@@ -78,7 +83,10 @@ public class Patient {
     public String getTelephone() { return telephone; }
     public void setTelephone(String telephone) { this.telephone = telephone; }
 
-    public LocalDateTime getDateEnregistrement() { return dateEnregistrement; }
+    public Date getDateEnregistrement() {
+        return Date.from(this.dateEnregistrement.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
     public void setDateEnregistrement(LocalDateTime dateEnregistrement) {
         this.dateEnregistrement = dateEnregistrement;
     }

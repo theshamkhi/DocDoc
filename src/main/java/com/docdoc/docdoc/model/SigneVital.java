@@ -2,6 +2,8 @@ package com.docdoc.docdoc.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 @Entity
 @Table(name = "signes_vitaux")
@@ -86,7 +88,9 @@ public class SigneVital {
     public Double getTaille() { return taille; }
     public void setTaille(Double taille) { this.taille = taille; }
 
-    public LocalDateTime getDateMesure() { return dateMesure; }
+    public Date getDateMesure() {
+        return dateMesure != null ? Date.from(dateMesure.atZone(ZoneId.systemDefault()).toInstant()) : null;
+    }
     public void setDateMesure(LocalDateTime dateMesure) { this.dateMesure = dateMesure; }
 
     public Infirmier getInfirmier() { return infirmier; }
