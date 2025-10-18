@@ -1,10 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: 1hear
-  Date: 16/10/2025
-  Time: 23:59
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
@@ -60,6 +53,15 @@
         </div>
     </c:if>
 
+    <c:if test="${not empty error}">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+                <p class="text-red-800">${error}</p>
+            </div>
+        </div>
+    </c:if>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column -->
         <div class="lg:col-span-2 space-y-6">
@@ -76,9 +78,7 @@
                     </div>
                     <div>
                         <p class="text-gray-600 text-sm">Date</p>
-                        <p class="text-gray-900 font-semibold">
-                            <c:out value="${formattedDate}" />
-                        </p>
+                        <p class="text-gray-900 font-semibold">${formattedDate}</p>
                     </div>
                 </div>
 
@@ -98,44 +98,73 @@
                 </div>
             </div>
 
-            <!-- Expertise Section -->
-                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
-                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-user-check text-purple-600 mr-2"></i>
-                        Expertise demandée
-                    </h3>
+            <!-- Expertise Section - ✅ FIXED: Now iterates through list -->
+            <c:if test="${not empty consultation.demandesExpertise}">
+                <c:forEach var="expertise" items="${consultation.demandesExpertise}">
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-user-check text-purple-600 mr-2"></i>
+                            Expertise demandée
+                        </h3>
 
-                <div class="space-y-3">
-                    <c:if test="${not empty consultation.demandeExpertise}">
-                        <div>
-                            <p class="text-gray-600 text-sm">Spécialiste</p>
-                            <p class="text-gray-900 font-semibold">
-                                Dr ${consultation.demandeExpertise.specialiste.nom} ${consultation.demandeExpertise.specialiste.prenom}
-                                <span class="text-xs text-gray-600 ml-2">${consultation.demandeExpertise.specialiste.specialite.label}</span>
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-gray-600 text-sm">Question</p>
-                            <p class="text-gray-900">${consultation.demandeExpertise.question}</p>
-                        </div>
-                        <c:if test="${not empty consultation.demandeExpertise.donneesSupplementaires}">
+                        <div class="space-y-3">
+                            <c:if test="${not empty expertise.creneau and not empty expertise.creneau.specialiste}">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Spécialiste</p>
+                                    <p class="text-gray-900 font-semibold">
+                                        Dr ${expertise.creneau.specialiste.nom} ${expertise.creneau.specialiste.prenom}
+                                        <span class="text-xs text-gray-600 ml-2">${expertise.creneau.specialiste.specialite.label}</span>
+                                    </p>
+                                </div>
+                            </c:if>
                             <div>
-                                <p class="text-gray-600 text-sm">Données supplémentaires</p>
-                                <p class="text-gray-900">${consultation.demandeExpertise.donneesSupplementaires}</p>
+                                <p class="text-gray-600 text-sm">Question</p>
+                                <p class="text-gray-900">${expertise.question}</p>
                             </div>
-                        </c:if>
-                        <c:if test="${not empty consultation.demandeExpertise.creneau}">
+                            <c:if test="${not empty expertise.donneesSupplementaires}">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Données supplémentaires</p>
+                                    <p class="text-gray-900">${expertise.donneesSupplementaires}</p>
+                                </div>
+                            </c:if>
+                            <c:if test="${not empty expertise.creneau}">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Créneau</p>
+                                    <p class="text-gray-900 font-semibold">
+                                            ${expertise.creneau.dateCreneau} à ${expertise.creneau.heureDebut}
+                                    </p>
+                                </div>
+                            </c:if>
                             <div>
-                                <p class="text-gray-600 text-sm">Créneau</p>
-                                <p class="text-gray-900 font-semibold">
-                                    <fmt:formatDate value="${consultation.demandeExpertise.creneau.dateCreneau}" pattern="dd/MM/yyyy"/>
-                                    à ${consultation.demandeExpertise.creneau.heureDebut}
-                                </p>
+                                <p class="text-gray-600 text-sm">Statut</p>
+                                <span class="inline-block px-2 py-1 text-xs rounded font-semibold
+                                    ${expertise.statut.name() == 'EN_ATTENTE' ? 'bg-yellow-100 text-yellow-800' :
+                                      expertise.statut.name() == 'TERMINEE' ? 'bg-green-100 text-green-800' :
+                                      'bg-blue-100 text-blue-800'}">
+                                    <c:choose>
+                                        <c:when test="${expertise.statut.name() == 'EN_ATTENTE'}">En attente</c:when>
+                                        <c:when test="${expertise.statut.name() == 'TERMINEE'}">Répondue</c:when>
+                                        <c:otherwise>${expertise.statut.label}</c:otherwise>
+                                    </c:choose>
+                                </span>
                             </div>
-                        </c:if>
-                    </c:if>
-                </div>
-            </div>
+
+                            <!-- Show response if completed -->
+                            <c:if test="${expertise.statut.name() == 'TERMINEE' and not empty expertise.avisMedical}">
+                                <div class="mt-4 pt-4 border-t border-purple-200">
+                                    <p class="text-gray-600 text-sm font-semibold mb-2">Avis médical</p>
+                                    <p class="text-gray-900 bg-white p-3 rounded">${expertise.avisMedical}</p>
+
+                                    <c:if test="${not empty expertise.recommandations}">
+                                        <p class="text-gray-600 text-sm font-semibold mb-2 mt-3">Recommandations</p>
+                                        <p class="text-gray-900 bg-white p-3 rounded">${expertise.recommandations}</p>
+                                    </c:if>
+                                </div>
+                            </c:if>
+                        </div>
+                    </div>
+                </c:forEach>
+            </c:if>
 
             <!-- Actes Techniques Section -->
             <div class="bg-white rounded-lg shadow-lg p-6">
@@ -166,23 +195,74 @@
                 </c:choose>
 
                 <!-- Add Technical Act Form -->
-                <form method="post" action="${pageContext.request.contextPath}/generaliste/consultation/ajouter-acte"
-                      class="flex gap-2">
-                    <input type="hidden" name="csrfToken" value="${csrfToken}">
-                    <input type="hidden" name="consultationId" value="${consultation.id}">
+                <c:if test="${consultation.statut.name() == 'EN_COURS'}">
+                    <form method="post" action="${pageContext.request.contextPath}/generaliste/consultation/ajouter-acte"
+                          class="flex gap-2">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
+                        <input type="hidden" name="consultationId" value="${consultation.id}">
 
-                    <select name="typeActe" required
-                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
-                        <option value="">-- Ajouter un acte --</option>
-                        <c:forEach var="type" items="${typesActes}">
-                            <option value="${type.name()}">${type.label} (${type.tarif} DH)</option>
-                        </c:forEach>
-                    </select>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
-                        <i class="fas fa-plus mr-1"></i>Ajouter
-                    </button>
-                </form>
+                        <select name="typeActe" required
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                            <option value="">-- Ajouter un acte --</option>
+                            <c:forEach var="type" items="${typesActes}">
+                                <option value="${type.name()}">${type.label} (${type.tarif} DH)</option>
+                            </c:forEach>
+                        </select>
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
+                            <i class="fas fa-plus mr-1"></i>Ajouter
+                        </button>
+                    </form>
+                </c:if>
             </div>
+
+            <!-- Close Consultation Form -->
+            <c:if test="${consultation.statut.name() == 'EN_COURS'}">
+                <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-check-square text-blue-600 mr-2"></i>
+                        Terminer la consultation
+                    </h3>
+
+                    <form method="post" action="${pageContext.request.contextPath}/generaliste/consultation/close" class="space-y-4">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
+                        <input type="hidden" name="consultationId" value="${consultation.id}">
+
+                        <!-- Diagnostic -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-stethoscope text-blue-600 mr-2"></i>
+                                Diagnostic <span class="text-red-500">*</span>
+                            </label>
+                            <textarea name="diagnostic" required
+                                      rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                      placeholder="Diagnostic de la consultation..."></textarea>
+                            <p class="text-xs text-gray-600 mt-1">Diagnostic établi lors de la consultation</p>
+                        </div>
+
+                        <!-- Traitement -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-prescription-bottle text-green-600 mr-2"></i>
+                                Traitement prescrit
+                            </label>
+                            <textarea name="traitement"
+                                      rows="3"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                      placeholder="Traitement recommandé (optionnel)..."></textarea>
+                            <p class="text-xs text-gray-600 mt-1">Traitement prescrit au patient (optionnel)</p>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex gap-2">
+                            <button type="submit"
+                                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                                <i class="fas fa-check mr-2"></i>Terminer la consultation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </c:if>
         </div>
 
         <!-- Right Column - Cost Summary -->
@@ -215,20 +295,20 @@
                                 </p>
                             </div>
                             <p class="text-lg font-bold">
-                                <fmt:formatNumber value="${coutActes}" minFractionDigits="0" maxFractionDigits="2"/>
+                                <fmt:formatNumber value="${coutActes}" minFractionDigits="2" maxFractionDigits="2"/>
                                 DH
                             </p>
                         </div>
                     </c:if>
 
-                    <!-- Expertise Cost -->
-                    <c:if test="${not empty consultation.demandeExpertise}">
+                    <!-- Expertise Cost - ✅ FIXED: Sum all expertises -->
+                    <c:if test="${not empty consultation.demandesExpertise}">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-green-100 text-sm">Expertise</p>
-                                <p class="text-xs text-green-100">Tarif spécialiste</p>
+                                <p class="text-green-100 text-sm">Expertise(s)</p>
+                                <p class="text-xs text-green-100">${consultation.demandesExpertise.size()} demande(s)</p>
                             </div>
-                            <p class="text-lg font-bold">${consultation.demandeExpertise.specialiste.tarif} DH</p>
+                            <p class="text-lg font-bold">${coutExpertise} DH</p>
                         </div>
                     </c:if>
                 </div>
@@ -279,4 +359,3 @@
 </div>
 </body>
 </html>
-

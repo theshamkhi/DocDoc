@@ -13,7 +13,7 @@ public class DemandeExpertise {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "consultation_id", nullable = false)
     private Consultation consultation;
 

@@ -1,6 +1,7 @@
 package com.docdoc.docdoc.repository;
 
 import com.docdoc.docdoc.config.JPAUtil;
+import com.docdoc.docdoc.model.Infirmier;
 import com.docdoc.docdoc.model.Patient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -18,6 +19,27 @@ public class PatientRepository extends GenericRepository<Patient, String> {
     @Override
     protected boolean isNew(Patient entity) {
         return entity.getId() == null;
+    }
+
+    /**
+     * Find all patients who have had vital signs measured by a specific nurse
+     * @param infirmier The nurse
+     * @return List of distinct patients
+     */
+    public List<Patient> findByInfirmier(Infirmier infirmier) {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            String jpql = "SELECT DISTINCT p FROM Patient p " +
+                    "JOIN SigneVital sv ON sv.patient = p " +
+                    "WHERE sv.infirmier = :infirmier " +
+                    "ORDER BY p.nom, p.prenom";
+
+            return em.createQuery(jpql, Patient.class)
+                    .setParameter("infirmier", infirmier)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
     }
 
     public Optional<Patient> findByNumeroSecuriteSociale(String numeroSS) {

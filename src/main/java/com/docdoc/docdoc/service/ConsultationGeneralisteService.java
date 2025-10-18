@@ -1,6 +1,7 @@
 package com.docdoc.docdoc.service;
 
 import com.docdoc.docdoc.model.*;
+import com.docdoc.docdoc.model.enums.Priorite;
 import com.docdoc.docdoc.model.enums.Specialite;
 import com.docdoc.docdoc.repository.*;
 import java.util.List;
@@ -63,41 +64,103 @@ public class ConsultationGeneralisteService {
         return creneauRepository.findCreneauxDisponibles(specialisteOpt.get());
     }
 
+    /**
+     * Demande une expertise - supports multiple expertise requests per consultation
+     * Fixed to handle @OneToMany relationship properly
+     */
     public DemandeExpertise demanderExpertise(Long consultationId, String specialisteId,
                                               Long creneauId, String question,
                                               String donneesSupplementaires,
-                                              String priorite) {
-        Optional<Consultation> consultationOpt = consultationRepository.findById(consultationId);
-        Optional<MedecinSpecialiste> specialisteOpt = specialisteRepository.findById(specialisteId);
-        Optional<Creneau> creneauOpt = creneauRepository.findById(creneauId);
+                                              String prioriteStr) {
 
-        if (consultationOpt.isEmpty() || specialisteOpt.isEmpty() || creneauOpt.isEmpty()) {
-            throw new IllegalArgumentException("Ressource introuvable");
+        // Validate all inputs first
+        if (consultationId == null || consultationId <= 0) {
+            throw new IllegalArgumentException("ID consultation invalide");
+        }
+        if (specialisteId == null || specialisteId.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID spécialiste invalide");
+        }
+        if (creneauId == null || creneauId <= 0) {
+            throw new IllegalArgumentException("ID créneau invalide");
+        }
+        if (question == null || question.trim().isEmpty()) {
+            throw new IllegalArgumentException("La question est obligatoire");
+        }
+
+        // Retrieve all entities FIRST
+        Optional<Consultation> consultationOpt = consultationRepository.findById(consultationId);
+        if (consultationOpt.isEmpty()) {
+            throw new IllegalArgumentException("Consultation introuvable avec l'ID: " + consultationId);
+        }
+
+        Optional<MedecinSpecialiste> specialisteOpt = specialisteRepository.findById(specialisteId);
+        if (specialisteOpt.isEmpty()) {
+            throw new IllegalArgumentException("Spécialiste introuvable avec l'ID: " + specialisteId);
+        }
+
+        Optional<Creneau> creneauOpt = creneauRepository.findById(creneauId);
+        if (creneauOpt.isEmpty()) {
+            throw new IllegalArgumentException("Créneau introuvable avec l'ID: " + creneauId);
         }
 
         Consultation consultation = consultationOpt.get();
         MedecinSpecialiste specialiste = specialisteOpt.get();
         Creneau creneau = creneauOpt.get();
 
-        if (!creneau.getDisponible()) {
-            throw new IllegalStateException("Ce créneau n'est plus disponible");
+        // Verify creneau is available
+        if (creneau.getDisponible() == null || !creneau.getDisponible()) {
+            throw new IllegalStateException("Ce créneau n'est plus disponible. Veuillez en sélectionner un autre.");
         }
 
-        DemandeExpertise demandeExpertise = new DemandeExpertise();
-        demandeExpertise.setConsultation(consultation);
-        demandeExpertise.setSpecialiste(specialiste);
-        demandeExpertise.setCreneau(creneau);
-        demandeExpertise.setQuestion(question);
-        demandeExpertise.setDonneesSupplementaires(donneesSupplementaires);
-        demandeExpertise.setPriorite(Enum.valueOf(com.docdoc.docdoc.model.enums.Priorite.class, priorite));
+        // Verify creneau belongs to the specialist
+        if (creneau.getSpecialiste() == null || !creneau.getSpecialiste().getId().equals(specialiste.getId())) {
+            throw new IllegalStateException("Ce créneau ne correspond pas au spécialiste sélectionné");
+        }
 
-        creneau.reserver();
-        creneauRepository.save(creneau);
+        // Parse priority
+        Priorite priorite;
+        try {
+            priorite = Priorite.valueOf(prioriteStr != null ? prioriteStr.toUpperCase() : "NORMALE");
+        } catch (IllegalArgumentException e) {
+            priorite = Priorite.NORMALE;
+        }
 
-        consultation.setDemandeExpertise(demandeExpertise);
-        consultationRepository.save(consultation);
+        try {
+            // STEP 1: Reserve the creneau FIRST
+            creneau.reserver();
+            Creneau savedCreneau = creneauRepository.save(creneau);
 
-        return demandeExpertiseRepository.save(demandeExpertise);
+            // STEP 2: Create and save the expertise request
+            DemandeExpertise demandeExpertise = new DemandeExpertise();
+            demandeExpertise.setConsultation(consultation);
+            demandeExpertise.setSpecialiste(specialiste);
+            demandeExpertise.setCreneau(savedCreneau); // Use the saved creneau
+            demandeExpertise.setQuestion(question.trim());
+            demandeExpertise.setDonneesSupplementaires(donneesSupplementaires != null ? donneesSupplementaires.trim() : "");
+            demandeExpertise.setPriorite(priorite);
+
+            // Ensure date is set
+            if (demandeExpertise.getDateDemande() == null) {
+                demandeExpertise.setDateDemande(java.time.LocalDateTime.now());
+            }
+
+            DemandeExpertise savedExpertise = demandeExpertiseRepository.save(demandeExpertise);
+
+            // STEP 3: Add to consultation's list (supports multiple expertise requests)
+            if (consultation.getDemandesExpertise() == null) {
+                consultation.setDemandesExpertise(new java.util.ArrayList<>());
+            }
+            consultation.getDemandesExpertise().add(savedExpertise);
+            consultationRepository.save(consultation);
+
+            return savedExpertise;
+
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException("Impossible de réserver ce créneau: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors de la sauvegarde de l'expertise. Détails: " + e.getMessage(), e);
+        }
     }
 
     public ActeTechnique ajouterActeTechnique(Long consultationId, String typeActe) {
@@ -107,13 +170,20 @@ public class ConsultationGeneralisteService {
             throw new IllegalArgumentException("Consultation introuvable");
         }
 
-        com.docdoc.docdoc.model.enums.TypeActeTechnique type =
-                com.docdoc.docdoc.model.enums.TypeActeTechnique.valueOf(typeActe);
+        com.docdoc.docdoc.model.enums.TypeActeTechnique type;
+        try {
+            type = com.docdoc.docdoc.model.enums.TypeActeTechnique.valueOf(typeActe);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Type d'acte invalide: " + typeActe);
+        }
 
         ActeTechnique acte = new ActeTechnique(consultationOpt.get(), type);
         return acteTechniqueRepository.save(acte);
     }
 
+    /**
+     * US4: Calcule le coût total avec Lambda/Stream API
+     */
     public Double calculerCoutTotal(Long consultationId) {
         Optional<Consultation> consultationOpt = consultationRepository.findById(consultationId);
 
@@ -123,20 +193,22 @@ public class ConsultationGeneralisteService {
 
         Consultation consultation = consultationOpt.get();
 
-        Double coutConsultation = consultation.getCoutConsultation();
+        // Consultation cost (fixed)
+        Double coutConsultation = consultation.getCoutConsultation(); // 150 DH
 
-        // Lambda + Stream: mapToDouble().sum() for technical acts
+        // Technical acts cost (Lambda/Stream)
         List<ActeTechnique> actes = acteTechniqueRepository.findByConsultation(consultation);
         Double coutActes = actes.stream()
                 .mapToDouble(ActeTechnique::getTarif)
                 .sum();
 
+        // Expertise cost - sum ALL expertise requests if multiple
         Double coutExpertise = 0.0;
-        if (consultation.getDemandeExpertise() != null) {
-            DemandeExpertise expertise = consultation.getDemandeExpertise();
-            if (expertise.getCreneau() != null) {
-                coutExpertise = expertise.getSpecialiste().getTarif();
-            }
+        if (consultation.getDemandesExpertise() != null && !consultation.getDemandesExpertise().isEmpty()) {
+            // Sum tariffs of all specialists involved in expertise requests
+            coutExpertise = consultation.getDemandesExpertise().stream()
+                    .mapToDouble(d -> d.getSpecialiste() != null ? d.getSpecialiste().getTarif() : 0.0)
+                    .sum();
         }
 
         return coutConsultation + coutActes + coutExpertise;

@@ -42,21 +42,17 @@ public class GeneralisteDashboardServlet extends HttpServlet {
 
             var consultationsDuJour = consultationService.getConsultationsDuJour(medecin);
 
-
             var consultationsEnCours = toutesConsultations.stream()
                     .filter(c -> c.getStatut() == StatutConsultation.EN_COURS)
                     .collect(Collectors.toList());
-
 
             var consultationsTerminees = toutesConsultations.stream()
                     .filter(c -> c.getStatut() == StatutConsultation.TERMINEE)
                     .collect(Collectors.toList());
 
-
             var demandesExpertise = toutesConsultations.stream()
-                    .filter(c -> c.getDemandeExpertise() != null)
+                    .filter(c -> c.getDemandesExpertise() != null && !c.getDemandesExpertise().isEmpty())
                     .collect(Collectors.toList());
-
 
             var patientsEnAttente = patientService.getPatientsEnAttente();
 
@@ -70,7 +66,6 @@ public class GeneralisteDashboardServlet extends HttpServlet {
             request.setAttribute("patientsEnAttente", patientsEnAttente);
             request.setAttribute("stats", stats);
 
-            // Token CSRF
             String csrfToken = CSRFTokenUtil.getToken(session);
             request.setAttribute("csrfToken", csrfToken);
 
@@ -78,8 +73,10 @@ public class GeneralisteDashboardServlet extends HttpServlet {
                     .forward(request, response);
 
         } catch (Exception e) {
-                request.getRequestDispatcher("/WEB-INF/views/generaliste/dashboard.jsp")
-                        .forward(request, response);
+            e.printStackTrace();
+            request.setAttribute("error", "Erreur: " + e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/generaliste/dashboard.jsp")
+                    .forward(request, response);
         }
     }
 }

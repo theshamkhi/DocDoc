@@ -1,6 +1,7 @@
 package com.docdoc.docdoc.model;
 
 import com.docdoc.docdoc.model.enums.StatutConsultation;
+import com.docdoc.docdoc.model.enums.StatutExpertise;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -51,8 +52,8 @@ public class Consultation {
     @OneToMany(mappedBy = "consultation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ActeTechnique> actesTechniques = new ArrayList<>();
 
-    @OneToOne(mappedBy = "consultation", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private DemandeExpertise demandeExpertise;
+    @OneToMany(mappedBy = "consultation", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<DemandeExpertise> demandesExpertise = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -86,10 +87,11 @@ public class Consultation {
                 .mapToDouble(ActeTechnique::getTarif)
                 .sum();
 
-        double coutExpertise = 0.0;
-        if (demandeExpertise != null && demandeExpertise.getCreneau() != null) {
-            coutExpertise = demandeExpertise.getCreneau().getSpecialiste().getTarif();
-        }
+        double coutExpertise = demandesExpertise.stream()
+                .filter(demande -> demande.getCreneau() != null)
+                .filter(demande -> demande.getStatut() == StatutExpertise.TERMINEE)
+                .mapToDouble(demande -> demande.getCreneau().getSpecialiste().getTarif())
+                .sum();
 
         return coutConsultation + coutActes + coutExpertise;
     }
@@ -135,8 +137,8 @@ public class Consultation {
         this.actesTechniques = actesTechniques;
     }
 
-    public DemandeExpertise getDemandeExpertise() { return demandeExpertise; }
-    public void setDemandeExpertise(DemandeExpertise demandeExpertise) {
-        this.demandeExpertise = demandeExpertise;
+    public List<DemandeExpertise> getDemandesExpertise() { return demandesExpertise; }
+    public void setDemandesExpertise(List<DemandeExpertise> demandeExpertise) {
+        this.demandesExpertise = demandeExpertise;
     }
 }

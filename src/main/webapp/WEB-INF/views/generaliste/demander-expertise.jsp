@@ -47,7 +47,7 @@
            class="text-blue-600 hover:text-blue-800 mb-4 inline-block">
             <i class="fas fa-arrow-left mr-2"></i>Retour à la consultation
         </a>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">US3: Demander une expertise</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Demander une expertise</h1>
         <p class="text-gray-600">
             Pour ${consultation.patient.nom} ${consultation.patient.prenom}
         </p>
@@ -195,9 +195,9 @@
                         <span class="ml-2 text-sm text-gray-700">Normale</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="radio" name="priorite" value="HAUTE"
+                        <input type="radio" name="priorite" value="NON-URGENTE"
                                class="w-4 h-4 text-red-600">
-                        <span class="ml-2 text-sm text-gray-700">Haute</span>
+                        <span class="ml-2 text-sm text-gray-700">Non-Urgente</span>
                     </label>
                     <label class="flex items-center">
                         <input type="radio" name="priorite" value="URGENTE"

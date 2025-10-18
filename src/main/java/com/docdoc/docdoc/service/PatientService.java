@@ -28,6 +28,10 @@ public class PatientService {
         return patientRepository.findByNumeroSecuriteSociale(numeroSecuriteSociale);
     }
 
+    public List<Patient> findPatientsByInfirmier(Infirmier infirmier) {
+        return patientRepository.findByInfirmier(infirmier);
+    }
+
     public Patient enregistrerNouveauPatient(Patient patient, SigneVital signeVital, Infirmier infirmier) {
         EntityManager em = JPAUtil.getEntityManager();
         EntityTransaction tx = em.getTransaction();

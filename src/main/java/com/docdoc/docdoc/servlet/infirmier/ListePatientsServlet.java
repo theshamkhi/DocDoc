@@ -1,5 +1,6 @@
 package com.docdoc.docdoc.servlet.infirmier;
 
+import com.docdoc.docdoc.model.Infirmier;
 import com.docdoc.docdoc.model.Patient;
 import com.docdoc.docdoc.service.PatientService;
 import com.docdoc.docdoc.util.CSRFTokenUtil;
@@ -24,20 +25,31 @@ public class ListePatientsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String filtre = request.getParameter("filtre");
+        HttpSession session = request.getSession();
+        Infirmier infirmier = (Infirmier) session.getAttribute("user");
 
+        if (infirmier == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        String filtre = request.getParameter("filtre");
         List<Patient> patients;
 
+        // Apply filter based on parameter
         if ("attente".equals(filtre)) {
             patients = patientService.getPatientsEnAttente();
             request.setAttribute("filtreActif", "attente");
+        } else if ("mes-patients".equals(filtre)) {
+            patients = patientService.findPatientsByInfirmier(infirmier);
+            request.setAttribute("filtreActif", "mes-patients");
         } else {
             patients = patientService.getPatientsDuJour();
             request.setAttribute("filtreActif", "jour");
         }
 
+        // Search functionality
         String recherche = request.getParameter("recherche");
-
         if (recherche != null && !recherche.trim().isEmpty()) {
             String rechercheLC = recherche.toLowerCase().trim();
 
@@ -52,19 +64,22 @@ public class ListePatientsServlet extends HttpServlet {
             request.setAttribute("recherche", recherche);
         }
 
+        // Statistics
         long nombreEnAttente = patients.stream()
                 .filter(Patient::getEnAttente)
                 .count();
 
+        // Set attributes
+        request.setAttribute("infirmier", infirmier);
         request.setAttribute("patients", patients);
         request.setAttribute("nombreTotal", patients.size());
         request.setAttribute("nombreEnAttente", nombreEnAttente);
 
-        // Token CSRF pour les actions
-        String csrfToken = CSRFTokenUtil.getToken(request.getSession());
+        // CSRF Token
+        String csrfToken = CSRFTokenUtil.getToken(session);
         request.setAttribute("csrfToken", csrfToken);
 
-        // Messages de succès ou d'erreur
+        // Messages
         String success = request.getParameter("success");
         String error = request.getParameter("error");
         String info = request.getParameter("info");

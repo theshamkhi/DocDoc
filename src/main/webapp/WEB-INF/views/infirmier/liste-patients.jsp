@@ -1,10 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: 1hear
-  Date: 15/10/2025
-  Time: 10:28
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -27,6 +20,10 @@
                 <span class="text-xl font-bold text-gray-800">DocDoc - Infirmier</span>
             </div>
             <div class="flex items-center space-x-4">
+                <span class="text-gray-700">
+                    <i class="fas fa-user-nurse mr-2"></i>
+                    <strong>${infirmier.nom} ${infirmier.prenom}</strong>
+                </span>
                 <a href="${pageContext.request.contextPath}/infirmier/dashboard"
                    class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-home mr-2"></i>Tableau de bord
@@ -49,7 +46,19 @@
     <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
         <div class="mb-4 md:mb-0">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Liste des patients</h1>
-            <p class="text-gray-600">Gestion de la file d'attente et des patients</p>
+            <p class="text-gray-600">
+                <c:choose>
+                    <c:when test="${filtreActif eq 'mes-patients'}">
+                        Tous les patients dont vous avez mesuré les signes vitaux
+                    </c:when>
+                    <c:when test="${filtreActif eq 'attente'}">
+                        Patients en file d'attente
+                    </c:when>
+                    <c:otherwise>
+                        Tous les patients enregistrés aujourd'hui
+                    </c:otherwise>
+                </c:choose>
+            </p>
         </div>
         <a href="${pageContext.request.contextPath}/infirmier/patient/enregistrer"
            class="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition shadow-lg inline-flex items-center justify-center">
@@ -91,7 +100,12 @@
             <div class="flex items-center">
                 <i class="fas fa-users text-blue-500 text-3xl mr-4"></i>
                 <div>
-                    <p class="text-gray-600 text-sm">Total patients</p>
+                    <p class="text-gray-600 text-sm">
+                        <c:choose>
+                            <c:when test="${filtreActif eq 'mes-patients'}">Mes patients</c:when>
+                            <c:otherwise>Total patients</c:otherwise>
+                        </c:choose>
+                    </p>
                     <p class="text-2xl font-bold text-gray-900">${nombreTotal}</p>
                 </div>
             </div>
@@ -123,11 +137,15 @@
             <!-- Filter Tabs -->
             <div class="flex flex-wrap gap-2 mb-4">
                 <a href="${pageContext.request.contextPath}/infirmier/liste-patients"
-                   class="px-4 py-2 rounded-lg font-medium transition ${filtreActif eq 'jour' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
-                    <i class="fas fa-calendar-day mr-2"></i>Patients du jour
+                   class="px-4 py-2 rounded-lg font-medium transition ${filtreActif eq 'jour' ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                    <i class="fas fa-calendar-day mr-2"></i>Tous (aujourd'hui)
+                </a>
+                <a href="${pageContext.request.contextPath}/infirmier/liste-patients?filtre=mes-patients"
+                   class="px-4 py-2 rounded-lg font-medium transition ${filtreActif eq 'mes-patients' ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                    <i class="fas fa-user-nurse mr-2"></i>Mes patients
                 </a>
                 <a href="${pageContext.request.contextPath}/infirmier/liste-patients?filtre=attente"
-                   class="px-4 py-2 rounded-lg font-medium transition ${filtreActif eq 'attente' ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                   class="px-4 py-2 rounded-lg font-medium transition ${filtreActif eq 'attente' ? 'bg-orange-600 text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
                     <i class="fas fa-hourglass-end mr-2"></i>File d'attente
                     <c:if test="${nombreEnAttente > 0}">
                         <span class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">${nombreEnAttente}</span>
@@ -160,18 +178,31 @@
         </form>
     </div>
 
-    <!-- Queue Order Info (shown only when in attente filter) -->
-    <c:if test="${filtreActif eq 'attente' and not empty patients}">
-        <div class="bg-gradient-to-r from-orange-50 to-yellow-50 border-l-4 border-orange-500 p-4 mb-6 rounded-r-lg">
-            <div class="flex items-start">
-                <i class="fas fa-arrow-down text-orange-600 text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h3 class="font-bold text-orange-900 mb-1">Ordre de la file d'attente</h3>
-                    <p class="text-orange-800 text-sm">Les patients sont présentés par ordre d'arrivée (FIFO). Le premier de la liste est le prochain à être consulté.</p>
+    <!-- Filter Info Banner -->
+    <c:choose>
+        <c:when test="${filtreActif eq 'attente' and not empty patients}">
+            <div class="bg-gradient-to-r from-orange-50 to-yellow-50 border-l-4 border-orange-500 p-4 mb-6 rounded-r-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-arrow-down text-orange-600 text-2xl mr-3 mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-orange-900 mb-1">Ordre de la file d'attente</h3>
+                        <p class="text-orange-800 text-sm">Les patients sont présentés par ordre d'arrivée (FIFO). Le premier de la liste est le prochain à être consulté.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </c:if>
+        </c:when>
+        <c:when test="${filtreActif eq 'mes-patients' and not empty patients}">
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 p-4 mb-6 rounded-r-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-user-nurse text-purple-600 text-2xl mr-3 mt-1"></i>
+                    <div>
+                        <h3 class="font-bold text-purple-900 mb-1">Vos patients</h3>
+                        <p class="text-purple-800 text-sm">Cette liste affiche tous les patients dont vous avez mesuré les signes vitaux, quel que soit le jour.</p>
+                    </div>
+                </div>
+            </div>
+        </c:when>
+    </c:choose>
 
     <!-- Patients Table -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -187,6 +218,9 @@
                             </c:when>
                             <c:when test="${filtreActif eq 'attente'}">
                                 Aucun patient en attente pour le moment
+                            </c:when>
+                            <c:when test="${filtreActif eq 'mes-patients'}">
+                                Vous n'avez pas encore mesuré de signes vitaux
                             </c:when>
                             <c:otherwise>
                                 Aucun patient enregistré aujourd'hui
@@ -206,7 +240,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <c:if test="${filtreActif eq 'attente'}">
-                                    <i class="fas fa-sort-numeric-down mr-2"></i>Position
+                                    <i class="fas fa-sort-numeric-down mr-2"></i>Position /
                                 </c:if>
                                 Patient
                             </th>
@@ -319,8 +353,8 @@
                     <li><i class="fas fa-check-circle mr-2 text-green-600"></i>Les patients sont ajoutés à la file lors de l'enregistrement de leurs signes vitaux</li>
                     <li><i class="fas fa-check-circle mr-2 text-green-600"></i>Classement FIFO: Premier arrivé, premier consulté</li>
                     <li><i class="fas fa-check-circle mr-2 text-green-600"></i>La position dans la file est visible dans le filtre "File d'attente"</li>
+                    <li><i class="fas fa-check-circle mr-2 text-green-600"></i>Le filtre "Mes patients" affiche tous vos patients (historique complet)</li>
                     <li><i class="fas fa-check-circle mr-2 text-green-600"></i>Après la consultation, les patients sont automatiquement retirés</li>
-                    <li><i class="fas fa-check-circle mr-2 text-green-600"></i>Statut "En file" = patient en attente de consultation</li>
                 </ul>
             </div>
         </div>

@@ -121,14 +121,7 @@ public class ModifierPatientServlet extends HttpServlet {
                 }
             }
 
-            // Validate and update numero securite sociale if provided
             if (numeroSecuriteSociale != null && !numeroSecuriteSociale.trim().isEmpty()) {
-                if (!numeroSecuriteSociale.matches("\\d{15}")) {
-                    request.setAttribute("error", "Le numéro de sécurité sociale doit contenir exactement 15 chiffres");
-                    request.setAttribute("patient", patient);
-                    doGet(request, response);
-                    return;
-                }
                 patient.setNumeroSecuriteSociale(numeroSecuriteSociale.trim());
             }
 

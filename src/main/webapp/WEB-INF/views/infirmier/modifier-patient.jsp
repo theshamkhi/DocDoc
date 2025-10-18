@@ -186,10 +186,8 @@
                             <input type="text"
                                    name="numeroSecuriteSociale"
                                    value="${patient.numeroSecuriteSociale}"
-                                   pattern="[0-9]{15}"
-                                   maxlength="15"
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-                                   placeholder="123456789012345">
+                                   placeholder="1234567">
                             <p class="mt-1 text-xs text-gray-500">15 chiffres</p>
                         </div>
 

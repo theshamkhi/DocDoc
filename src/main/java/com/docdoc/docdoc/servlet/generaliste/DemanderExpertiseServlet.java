@@ -64,16 +64,30 @@ public class DemanderExpertiseServlet extends HttpServlet {
             return;
         }
 
+        String consultationIdStr = null;
         try {
-            String consultationIdStr = request.getParameter("consultationId");
+            consultationIdStr = request.getParameter("consultationId");
             String specialisteId = request.getParameter("specialisteId");
             String creneauIdStr = request.getParameter("creneauId");
             String question = request.getParameter("question");
             String donneesSupplementaires = request.getParameter("donneesSupplementaires");
             String priorite = request.getParameter("priorite");
 
-            if (consultationIdStr == null || specialisteId == null || creneauIdStr == null) {
-                request.setAttribute("error", "Paramètres manquants");
+            // Validation
+            if (consultationIdStr == null || consultationIdStr.trim().isEmpty()) {
+                request.setAttribute("error", "Consultation non trouvée");
+                doGet(request, response);
+                return;
+            }
+
+            if (specialisteId == null || specialisteId.trim().isEmpty()) {
+                request.setAttribute("error", "Veuillez sélectionner un spécialiste");
+                doGet(request, response);
+                return;
+            }
+
+            if (creneauIdStr == null || creneauIdStr.trim().isEmpty()) {
+                request.setAttribute("error", "Veuillez sélectionner un créneau");
                 doGet(request, response);
                 return;
             }
@@ -84,13 +98,23 @@ public class DemanderExpertiseServlet extends HttpServlet {
                 return;
             }
 
-            Long consultationId = Long.parseLong(consultationIdStr);
-            Long creneauId = Long.parseLong(creneauIdStr);
+            // Parse IDs
+            Long consultationId;
+            Long creneauId;
+            try {
+                consultationId = Long.parseLong(consultationIdStr.trim());
+                creneauId = Long.parseLong(creneauIdStr.trim());
+            } catch (NumberFormatException e) {
+                request.setAttribute("error", "Format de numéro invalide");
+                doGet(request, response);
+                return;
+            }
 
             if (priorite == null || priorite.trim().isEmpty()) {
                 priorite = "NORMALE";
             }
 
+            // Request expertise
             consultationService.demanderExpertise(
                     consultationId,
                     specialisteId.trim(),
@@ -100,17 +124,25 @@ public class DemanderExpertiseServlet extends HttpServlet {
                     priorite
             );
 
+            // Success redirect
             response.sendRedirect(request.getContextPath() +
                     "/generaliste/consultation/detail?id=" + consultationId +
-                    "&success=Expertise demandée avec succès");
+                    "&success=Expertise%20demand%C3%A9e%20avec%20succ%C3%A8s");
 
-        } catch (NumberFormatException e) {
-            request.setAttribute("error", "Format de numéro invalide");
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("error", "Erreur de validation: " + e.getMessage());
             doGet(request, response);
         } catch (IllegalStateException e) {
-            request.setAttribute("error", e.getMessage());
+            request.setAttribute("error", "Statut invalide: " + e.getMessage());
+            doGet(request, response);
+        } catch (RuntimeException e) {
+            // This is a database error
+            e.printStackTrace();
+            request.setAttribute("error", "Erreur base de données: " + e.getMessage() +
+                    ". Vérifiez que le créneau n'a pas été réservé par un autre utilisateur.");
             doGet(request, response);
         } catch (Exception e) {
+            e.printStackTrace();
             request.setAttribute("error", "Erreur: " + e.getMessage());
             doGet(request, response);
         }

@@ -27,7 +27,6 @@ public class SpecialistesBySpecialiteServlet extends HttpServlet {
 
         if (specialiteStr == null || specialiteStr.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("application/json");
             response.getWriter().write("[]");
             return;
         }
@@ -45,9 +44,9 @@ public class SpecialistesBySpecialiteServlet extends HttpServlet {
             for (int i = 0; i < specialistes.size(); i++) {
                 MedecinSpecialiste s = specialistes.get(i);
                 json.append("{")
-                        .append("\"id\":\"").append(escapeJson(s.getId())).append("\",")
-                        .append("\"nom\":\"").append(escapeJson(s.getNom())).append("\",")
-                        .append("\"prenom\":\"").append(escapeJson(s.getPrenom())).append("\",")
+                        .append("\"id\":\"").append(s.getId()).append("\",")
+                        .append("\"nom\":\"").append(s.getNom()).append("\",")
+                        .append("\"prenom\":\"").append(s.getPrenom()).append("\",")
                         .append("\"tarif\":").append(s.getTarif())
                         .append("}");
                 if (i < specialistes.size() - 1) json.append(",");
@@ -58,16 +57,7 @@ public class SpecialistesBySpecialiteServlet extends HttpServlet {
 
         } catch (IllegalArgumentException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("application/json");
             response.getWriter().write("[]");
         }
-    }
-
-    private String escapeJson(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
     }
 }

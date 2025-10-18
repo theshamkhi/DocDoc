@@ -1,13 +1,10 @@
 package com.docdoc.docdoc.servlet.generaliste;
 
-import com.docdoc.docdoc.model.Creneau;
 import com.docdoc.docdoc.service.ConsultationGeneralisteService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.util.List;
-
 
 @WebServlet("/generaliste/api/creneaux-disponibles")
 public class CreneauxDisponiblesServlet extends HttpServlet {
@@ -27,27 +24,30 @@ public class CreneauxDisponiblesServlet extends HttpServlet {
 
         if (specialisteId == null || specialisteId.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("application/json");
             response.getWriter().write("[]");
             return;
         }
 
         try {
-            List<Creneau> creneaux = consultationService.obtenirCreneauxDisponibles(specialisteId);
+            var creneaux = consultationService.obtenirCreneauxDisponibles(specialisteId);
 
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
 
-            // Construire le JSON
+            // Construire le JSON - seulement les créneaux disponibles
             StringBuilder json = new StringBuilder("[");
-            for (int i = 0; i < creneaux.size(); i++) {
-                Creneau c = creneaux.get(i);
-                json.append("{")
-                        .append("\"id\":").append(c.getId()).append(",")
-                        .append("\"date\":\"").append(c.getDateCreneau()).append("\",")
-                        .append("\"heure\":\"").append(escapeJson(c.getPlageHoraire())).append("\"")
-                        .append("}");
-                if (i < creneaux.size() - 1) json.append(",");
+            int count = 0;
+            for (var c : creneaux) {
+                // Only include available slots
+                if (c.getDisponible() != null && c.getDisponible()) {
+                    if (count > 0) json.append(",");
+                    json.append("{")
+                            .append("\"id\":").append(c.getId()).append(",")
+                            .append("\"date\":\"").append(c.getDateCreneau()).append("\",")
+                            .append("\"heure\":\"").append(c.getPlageHoraire()).append("\"")
+                            .append("}");
+                    count++;
+                }
             }
             json.append("]");
 
@@ -55,16 +55,7 @@ public class CreneauxDisponiblesServlet extends HttpServlet {
 
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.setContentType("application/json");
             response.getWriter().write("[]");
         }
-    }
-
-    private String escapeJson(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
     }
 }

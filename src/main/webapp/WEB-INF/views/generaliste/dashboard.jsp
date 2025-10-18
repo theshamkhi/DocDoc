@@ -170,7 +170,8 @@
                                             <p class="text-sm text-gray-600">
                                                 <c:out value="${formattedDate}" />
                                             </p>
-                                            <c:if test="${consultation.demandeExpertise ne null}">
+                                                <%-- ✅ FIXED: Check list instead of single object --%>
+                                            <c:if test="${not empty consultation.demandesExpertise}">
                                                 <span class="inline-block mt-1 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded font-semibold">
                                                     <i class="fas fa-check-circle mr-1"></i>Expertise
                                                 </span>
@@ -294,7 +295,6 @@
             </div>
 
             <!-- Demandes d'Expertise -->
-
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-white">
                     <h2 class="text-xl font-bold text-gray-900">
@@ -303,28 +303,54 @@
                     </h2>
                 </div>
 
-                <div class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-                    <c:if test="${not empty demandesExpertise}">
-                        <c:forEach var="consultation" items="${demandesExpertise}">
-                            <div class="p-4 hover:bg-gray-50 transition">
-                                <p class="font-bold text-gray-900 mb-1">
-                                    Dr ${consultation.demandeExpertise.specialiste.nom}
-                                </p>
-                                <p class="text-xs text-gray-600 mb-2">
-                                    <i class="fas fa-stethoscope mr-1"></i>
-                                        ${consultation.demandeExpertise.specialiste.specialite.label}
-                                </p>
-                                <p class="text-xs text-gray-700 italic mb-2">
-                                    "${consultation.demandeExpertise.question}"
-                                </p>
-                                <span class="inline-block px-2 py-1 text-xs rounded font-semibold
-                                    ${consultation.demandeExpertise.statut.name() == 'EN_ATTENTE' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
-                                        ${consultation.demandeExpertise.statut.name() == 'EN_ATTENTE' ? 'En attente' : 'Répondue'}
-                                </span>
-                            </div>
-                        </c:forEach>
-                    </c:if>
-                </div>
+                <c:choose>
+                    <c:when test="${empty demandesExpertise}">
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-inbox text-3xl mb-2"></i>
+                            <p>Aucune expertise demandée</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                            <c:forEach var="consultation" items="${demandesExpertise}">
+                                <%-- ✅ FIXED: Iterate through the list of demandes --%>
+                                <c:forEach var="demande" items="${consultation.demandesExpertise}">
+                                    <div class="p-4 hover:bg-gray-50 transition">
+                                        <p class="font-bold text-gray-900 mb-1">
+                                            <c:choose>
+                                                <c:when test="${not empty demande.creneau and not empty demande.creneau.specialiste}">
+                                                    Dr ${demande.creneau.specialiste.nom}
+                                                </c:when>
+                                                <c:otherwise>
+                                                    Spécialiste non assigné
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </p>
+                                        <c:if test="${not empty demande.creneau and not empty demande.creneau.specialiste}">
+                                            <p class="text-xs text-gray-600 mb-2">
+                                                <i class="fas fa-stethoscope mr-1"></i>
+                                                    ${demande.creneau.specialiste.specialite.label}
+                                            </p>
+                                        </c:if>
+                                        <p class="text-xs text-gray-700 italic mb-2">
+                                            "${demande.question}"
+                                        </p>
+                                        <span class="inline-block px-2 py-1 text-xs rounded font-semibold
+                                            ${demande.statut.name() == 'EN_ATTENTE' ? 'bg-yellow-100 text-yellow-800' :
+                                              demande.statut.name() == 'TERMINEE' ? 'bg-green-100 text-green-800' :
+                                              'bg-blue-100 text-blue-800'}">
+                                            <c:choose>
+                                                <c:when test="${demande.statut.name() == 'EN_ATTENTE'}">En attente</c:when>
+                                                <c:when test="${demande.statut.name() == 'TERMINEE'}">Répondue</c:when>
+                                                <c:otherwise>${demande.statut.label}</c:otherwise>
+                                            </c:choose>
+                                        </span>
+                                    </div>
+                                </c:forEach>
+                            </c:forEach>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
     </div>
